@@ -1,0 +1,24 @@
+//Código que foi usado pra gerar o grático: Visualizando Gradientes Adaptados
+import torch
+import matplotlib.pyplot as plt
+
+// Simulando gradientes
+timesteps = 100
+gradients = torch.randn(timesteps)
+
+// EWMA para gradiente médio e variância
+beta1, beta2 = 0.9, 0.999
+m, v = 0, 0
+m_vals, v_vals = [], []
+
+for g in gradients:
+    m = beta1 * m + (1 - beta1) * g
+    v = beta2 * v + (1 - beta2) * (g ** 2)
+    m_vals.append(m)
+    v_vals.append(v)
+
+plt.plot(range(timesteps), gradients.numpy(), label='Gradientes')
+plt.plot(range(timesteps), m_vals, label='EWMA Gradientes', linestyle='--')
+plt.legend()
+plt.show()
+
