@@ -1,0 +1,161 @@
+//Script que foi usado pra gerar o grático: Visualizando Gradientes Adaptados
+import torch
+import matplotlib.pyplot as plt
+
+// Simulando gradientes
+timesteps = 100
+gradients = torch.randn(timesteps)
+
+// EWMA para gradiente médio e variância
+beta1, beta2 = 0.9, 0.999
+m, v = 0, 0
+m_vals, v_vals = [], []
+
+for g in gradients:
+    m = beta1 * m + (1 - beta1) * g
+    v = beta2 * v + (1 - beta2) * (g ** 2)
+    m_vals.append(m)
+    v_vals.append(v)
+
+plt.plot(range(timesteps), gradients.numpy(), label='Gradientes')
+plt.plot(range(timesteps), m_vals, label='EWMA Gradientes', linestyle='--')
+plt.legend()
+plt.show()
+
+  
+//Script que foi usado pra gerar o grático: SGD e suas Variantes
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import matplotlib.pyplot as plt
+
+// Gerar dados simples
+torch.manual_seed(0)
+x = torch.randn(100, 1) * 10
+y = 2 * x + 1 + torch.randn(100, 1) * 2  // função linear com algum ruído
+
+// Definir o modelo (uma simples rede linear)
+model = nn.Linear(1, 1)
+
+// Definir a função de perda (erro quadrático médio)
+criterion = nn.MSELoss()
+
+// Função para treinar o modelo e plotar o gráfico da perda
+def train_and_plot(optimizer, lr, label):
+    losses = []
+    optimizer = optimizer(model.parameters(), lr=lr)
+    
+    for epoch in range(200):
+        model.train()
+        optimizer.zero_grad()
+        output = model(x)
+        loss = criterion(output, y)
+        loss.backward()
+        optimizer.step()
+        
+        losses.append(loss.item())
+        
+    plt.plot(losses, label=label)
+
+// Treinando com diferentes otimizadores
+plt.figure(figsize=(10, 6))
+
+
+// SGD com Momentum
+train_and_plot(lambda params, lr: optim.SGD(params, lr=lr, momentum=0.9), lr=0.01, label="SGD + Momentum")
+
+// SGD com Nesterov Momentum
+train_and_plot(lambda params, lr: optim.SGD(params, lr=lr, momentum=0.9, nesterov=True), lr=0.01, label="SGD + Nesterov Momentum")
+
+// Exibir gráfico
+plt.title('Comparação entre SGD, SGD com Momentum e Nesterov Momentum')
+plt.xlabel('Épocas')
+plt.ylabel('Perda (Loss)')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+//Script que foi usado pra gerar o grático: Learning Rate Schedulers
+import torch
+import matplotlib.pyplot as plt
+from torch.optim.lr_scheduler import StepLR
+from torch.optim import SGD
+
+// Modelo simples
+model = torch.nn.Linear(10, 1)
+optimizer = SGD(model.parameters(), lr=0.1)
+scheduler = StepLR(optimizer, step_size=10, gamma=0.1)
+
+// Armazenar a taxa de aprendizado para cada época
+learning_rates = []
+
+for epoch in range(30):
+    // Simulação do treinamento
+    scheduler.step()
+    learning_rates.append(scheduler.get_last_lr()[0])
+    print(f"Epoch {epoch+1}: Learning Rate = {scheduler.get_last_lr()[0]}")
+
+// Plotando o gráfico da taxa de aprendizado ao longo das épocas
+plt.plot(range(1, 31), learning_rates, label='Learning Rate')
+plt.title('Evolução da Taxa de Aprendizado com StepLR')
+plt.xlabel('Épocas')
+plt.ylabel('Taxa de Aprendizado')
+plt.legend()
+plt.grid(True)
+plt.show()
+
+
+//Script que foi usado pra gerar o grático: Putting It All Together
+import torch
+import matplotlib.pyplot as plt
+from torch.optim import Adam
+from torch.optim.lr_scheduler import CosineAnnealingLR
+
+// Modelo simples
+model = torch.nn.Linear(10, 1)
+criterion = torch.nn.MSELoss()
+data = torch.randn(100, 10)
+target = torch.randn(100, 1)
+
+// Configurações do otimizador e scheduler
+optimizer = Adam(model.parameters(), lr=0.01)
+scheduler = CosineAnnealingLR(optimizer, T_max=50)
+
+// Armazenar valores de perda e taxa de aprendizado
+losses = []
+learning_rates = []
+
+for epoch in range(50):
+    optimizer.zero_grad()
+    output = model(data)
+    loss = criterion(output, target)
+    loss.backward()
+    optimizer.step()
+    scheduler.step()
+    
+    // Armazenar o valor da perda e da taxa de aprendizado
+    losses.append(loss.item())
+    learning_rates.append(scheduler.get_last_lr()[0])
+    
+    print(f"Epoch {epoch+1}, Loss: {loss.item()}, LR: {scheduler.get_last_lr()[0]}")
+
+// Criar os gráficos
+fig, ax1 = plt.subplots(figsize=(10, 6))
+
+// Gráfico da perda
+ax1.set_xlabel('Épocas')
+ax1.set_ylabel('Perda', color='tab:red')
+ax1.plot(range(1, 51), losses, color='tab:red', label='Perda')
+ax1.tick_params(axis='y', labelcolor='tab:red')
+
+// Criar o segundo eixo y para a taxa de aprendizado
+ax2 = ax1.twinx()
+ax2.set_ylabel('Taxa de Aprendizado', color='tab:blue')
+ax2.plot(range(1, 51), learning_rates, color='tab:blue', label='Taxa de Aprendizado', linestyle='--')
+ax2.tick_params(axis='y', labelcolor='tab:blue')
+
+// Exibir os gráficos
+fig.tight_layout()
+plt.title('Evolução da Perda e Taxa de Aprendizado')
+plt.show()
